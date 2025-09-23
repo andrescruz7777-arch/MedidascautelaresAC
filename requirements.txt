@@ -3,5 +3,3 @@ pandas
 PyPDF2
 pdfplumber
 openai
-pdf2image
-pytesseract
