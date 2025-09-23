@@ -194,7 +194,10 @@ if uploaded_files:
     st.download_button("⬇️ PDF unificado",data=out.getvalue(),file_name="Respuestas_Unificadas.pdf")
 else:
     st.info("Sube PDFs para analizar.")
-    st.subheader("📑 Segundo paso: cargar oficio del juzgado")
+    # ========== Segundo paso: oficio del juzgado ==========
+st.subheader("📑 Segundo paso: cargar oficio del juzgado")
+
+oficio = st.file_uploader("Cargar oficio del juzgado (PDF)", type=["pdf"], accept_multiple_files=False, key="oficio")
 
 if oficio:
     oficio_text = extract_text_pdf(oficio.read())
@@ -206,7 +209,7 @@ if oficio:
             if re.search(pat, oficio_text, re.IGNORECASE):
                 entidades_oficio.add(canon)
 
-    # 2. Detectar si alguno está como DEMANDANTE
+    # 2. Detectar demandante (para excluirlo)
     demandante = set()
     if "DEMANDANTE" in oficio_text.upper():
         for canon, d in ENTITY_DB.items():
@@ -214,13 +217,14 @@ if oficio:
                 if re.search(r"DEMANDANTE.*" + pat, oficio_text, re.IGNORECASE):
                     demandante.add(canon)
 
-    # 3. Quitar al demandante de la lista de oficio
     entidades_oficio = entidades_oficio - demandante
 
-    # 4. Bancos ya respondieron
-    respondieron = {r["institución"] for r in rows}
+    # 3. Bancos que ya respondieron (si hay respuestas)
+    respondieron = set()
+    if "rows" in locals():
+        respondieron = {r["institución"] for r in rows}
 
-    # 5. Diferencia
+    # 4. Diferencia
     faltan = entidades_oficio - respondieron
 
     if faltan:
@@ -232,4 +236,4 @@ if oficio:
                            file_name="pendientes.txt",
                            mime="text/plain")
     else:
-        st.success("✅ Todos los bancos del oficio ya respondieron")
+        st.success("✅ Todos los bancos del oficio ya respondieron o el oficio no contiene más entidades")
