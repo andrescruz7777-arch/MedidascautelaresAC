@@ -196,27 +196,40 @@ else:
     st.info("Sube PDFs para analizar.")
     st.subheader("📑 Segundo paso: cargar oficio del juzgado")
 
-oficio = st.file_uploader("Cargar oficio del juzgado (PDF)", type=["pdf"], accept_multiple_files=False)
-
 if oficio:
     oficio_text = extract_text_pdf(oficio.read())
-    # Buscar entidades mencionadas en el oficio usando el catálogo
+
+    # 1. Detectar bancos mencionados
     entidades_oficio = set()
     for canon, d in ENTITY_DB.items():
         for pat in d.get("names", []):
             if re.search(pat, oficio_text, re.IGNORECASE):
                 entidades_oficio.add(canon)
-    # Bancos ya respondieron
+
+    # 2. Detectar si alguno está como DEMANDANTE
+    demandante = set()
+    if "DEMANDANTE" in oficio_text.upper():
+        for canon, d in ENTITY_DB.items():
+            for pat in d.get("names", []):
+                if re.search(r"DEMANDANTE.*" + pat, oficio_text, re.IGNORECASE):
+                    demandante.add(canon)
+
+    # 3. Quitar al demandante de la lista de oficio
+    entidades_oficio = entidades_oficio - demandante
+
+    # 4. Bancos ya respondieron
     respondieron = {r["institución"] for r in rows}
-    # Diferencia
+
+    # 5. Diferencia
     faltan = entidades_oficio - respondieron
 
     if faltan:
         st.subheader("Bancos pendientes de responder según oficio")
         pendientes_text = "\n".join(f"- {b}" for b in sorted(faltan))
         st.code(pendientes_text)
-        st.download_button("⬇️ Descargar pendientes (.txt)", data=pendientes_text.encode("utf-8"),
-                           file_name="pendientes.txt", mime="text/plain")
+        st.download_button("⬇️ Descargar pendientes (.txt)",
+                           data=pendientes_text.encode("utf-8"),
+                           file_name="pendientes.txt",
+                           mime="text/plain")
     else:
         st.success("✅ Todos los bancos del oficio ya respondieron")
-
