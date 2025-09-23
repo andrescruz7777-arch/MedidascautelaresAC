@@ -1,5 +1,4 @@
-# danis.py — Respuesta de medidas cautelares (Streamlit, IA only)
-# Versión Cloud-friendly: elimina OCR y usa IA como fallback.
+# danis.py — Respuesta de medidas cautelares (Streamlit, IA only, catálogo extendido)
 
 import streamlit as st
 import pandas as pd
@@ -52,22 +51,42 @@ PRODUCTS = [
     "carteras colectivas","pensiones voluntarias","tarjeta"
 ]
 
-# ========== Catálogo reducido (puedes extender con todos los bancos que definimos antes) ==========
+# ========== Catálogo extendido ==========
 ENTITY_DB = {
-    "BANCOLOMBIA": {"domains":["bancolombia.com.co"], "names":[r"\bbancolombia\b"]},
-    "BANCO DE BOGOTÁ": {"domains":["bancodebogota.com.co"], "names":[r"\bbanco\s+de\s+bogot[áa]\b"]},
+    "BANCOLOMBIA": {"domains":["bancolombia.com.co"], "names":[r"\bbancolombia\b", r"\bbanco\s+colombia\b"]},
+    "BANCOLOMBIA (NEQUI)": {"domains":["nequi.co"], "names":[r"\bnequi\b"]},
     "DAVIVIENDA": {"domains":["davivienda.com"], "names":[r"\bdavivienda\b"]},
+    "DAVIVIENDA (DAVIPLATA)": {"domains":["daviplata.com"], "names":[r"\bdaviplata\b"]},
+    "BANCO DE BOGOTÁ": {"domains":["bancodebogota.com.co"], "names":[r"\bbanco\s+de\s+bogot[áa]\b"]},
     "BBVA": {"domains":["bbva.com.co"], "names":[r"\bbbva\b"]},
-    "ITAÚ": {"domains":["itau.co"], "names":[r"\bita[úu]\b"]},
-    "SCOTIABANK COLPATRIA": {"domains":["scotiabankcolpatria.com"], "names":[r"\bcolpatria\b"]},
-    "GNB SUDAMERIS": {"domains":["gnbsudameris.com"], "names":[r"\bsudameris\b"]},
+    "BANCO POPULAR": {"domains":["bancopopular.com.co"], "names":[r"\bbanco\s+popular\b"]},
+    "BANCO AGRARIO": {"domains":["bancoagrario.gov.co"], "names":[r"\bbanco\s+agrario\b"]},
+    "BANCO CAJA SOCIAL": {"domains":["bancocajasocial.com.co"], "names":[r"\bbanco\s+caja\s+social\b", r"\bcaja\s+social\b"]},
+    "SCOTIABANK COLPATRIA": {"domains":["scotiabankcolpatria.com"], "names":[r"\bcolpatria\b", r"\bscotiabank\b"]},
+    "BANCO DE OCCIDENTE": {"domains":["bancodeoccidente.com.co"], "names":[r"\bbanco\s+de\s+occidente\b"]},
+    "ITAÚ": {"domains":["itau.co"], "names":[r"\bita[úu]\b", r"\bbanco\s+itau\b"]},
+    "BANCO FALABELLA": {"domains":["bancofalabella.com.co"], "names":[r"\bfalabella\b"]},
+    "BANCO PICHINCHA": {"domains":["pichincha.com.co"], "names":[r"\bpichincha\b"]},
+    "BANCO W": {"domains":["bancow.com.co"], "names":[r"\bbanco\s+w\b"]},
+    "GNB SUDAMERIS": {"domains":["gnbsudameris.com"], "names":[r"\bgnb\s*sudameris\b", r"\bsudameris\b"]},
     "SERFINANZA": {"domains":["serfinanza.com"], "names":[r"\bserfinanza\b"]},
-    "MUNDO MUJER": {"domains":["mundomujer.com"], "names":[r"\bmundo\s+mujer\b"]},
-    "LULO BANK": {"domains":["lulo.bank","lulo.com.co"], "names":[r"\blulo\b"]},
+    "BANCO MUNDO MUJER": {"domains":["mundomujer.com"], "names":[r"\bmundo\s+mujer\b"]},
+    "GLOBAL 66": {"domains":["global66.com"], "names":[r"\bglobal\s*66\b"]},
+    "UALÁ": {"domains":["uala.com.co"], "names":[r"\bual[áa]\b"]},
+    "LULO BANK": {"domains":["lulo.bank","lulo.com.co"], "names":[r"\blulo\s*bank\b", r"\blulo\b"]},
     "MOVII": {"domains":["movii.com.co"], "names":[r"\bmovii\b"]},
     "DALE!": {"domains":["dale.com.co"], "names":[r"\bdale!?"]},
-    "UALÁ": {"domains":["uala.com.co"], "names":[r"\bual[áa]\b"]},
     "PROCREDIT": {"domains":["procredit.com.co"], "names":[r"\bprocredit\b"]},
+    "JURISCOOP": {"domains":["juriscoop.com.co"], "names":[r"\bjuriscoop\b"]},
+    "BANCOOMEVA": {"domains":["bancoomeva.com.co"], "names":[r"\bbancoomeva\b"]},
+    "BANCAMÍA": {"domains":["bancamia.com.co"], "names":[r"\bbancam[ií]a\b"]},
+    "BANCO AV VILLAS": {"domains":["avvillas.com.co"], "names":[r"\bav\s*villas\b"]},
+    "CITIBANK COLOMBIA": {"domains":["citibank.com.co"], "names":[r"\bcitibank\b"]},
+    "COOPCENTRAL": {"domains":["coopcentral.com.co"], "names":[r"\bcoopcentral\b"]},
+    "BANCO SANTANDER DE NEGOCIOS": {"domains":["santander.com.co"], "names":[r"\bsantander\b"]},
+    "MIBANCO": {"domains":["mibanco.com.co"], "names":[r"\bmibanco\b"]},
+    "TUYA": {"domains":["tuya.com.co"], "names":[r"\btuya\b"]},
+    "BOLD": {"domains":["bold.com.co"], "names":[r"\bbold\b"]},
 }
 
 def build_detectors(extra_raw: str):
