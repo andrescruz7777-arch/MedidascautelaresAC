@@ -108,22 +108,27 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Excluir coincidencias en la sección de DEMANDANTE
-    texto_sin_demandante = re.sub(r"demandante.*?(demandado|radicado|referencia)", " ", hay, flags=re.DOTALL)
+    # 1. Eliminar la sección donde aparece "DEMANDANTE ... DEMANDADO"
+    texto_sin_demandante = re.sub(
+        r"demandante.*?(demandado|radicado|referencia)", 
+        " ", 
+        hay, 
+        flags=re.DOTALL | re.IGNORECASE
+    )
 
-    # 2. Revisar dominios primero
+    # 2. Revisar dominios primero (correos, sitios web)
     for canon, regexes, domains in detectors:
         if any(dom.lower() in texto_sin_demandante for dom in domains):
             return canon
 
-    # 3. Revisar nombres en el texto sin DEMANDANTE
+    # 3. Revisar patrones de nombres en el texto sin demandante
     for canon, regexes, domains in detectors:
         if any(rx.search(texto_sin_demandante) for rx in regexes):
             return canon
 
-    # 4. Fallback al nombre de archivo
+    # 4. Si no encuentra nada, usar nombre de archivo como fallback
     return filename.rsplit(".", 1)[0].upper()
-
+    
 def classify(text: str) -> dict:
     t = text.lower()
 
