@@ -108,7 +108,7 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Excluir secciones típicas de DEMANDANTE
+    # 1. Eliminar secciones de DEMANDANTE hasta DEMANDADO / RADICADO / REFERENCIA / VS
     texto_sin_demandante = re.sub(
         r"demandante.*?(demandado|radicado|referencia|vs)",
         " ",
@@ -116,17 +116,23 @@ def detect_entity(filename: str, text: str, detectors) -> str:
         flags=re.DOTALL | re.IGNORECASE
     )
 
-    # 2. Revisar dominios primero
+    # 2. Regla especial: si detecta "sudameris" pero NO detecta "en atención a su oficio" o "nos permitimos informar"
+    # entonces probablemente es demandante, no emisor → lo ignoramos
+    if "sudameris" in texto_sin_demandante:
+        if not re.search(r"(atenci[oó]n.*oficio|nos\s+permitimos\s+informar)", texto_sin_demandante, re.IGNORECASE):
+            texto_sin_demandante = texto_sin_demandante.replace("sudameris", "")
+
+    # 3. Revisar dominios primero
     for canon, regexes, domains in detectors:
         if any(dom.lower() in texto_sin_demandante for dom in domains):
             return canon
 
-    # 3. Revisar patrones de nombres
+    # 4. Revisar patrones de nombres
     for canon, regexes, domains in detectors:
         if any(rx.search(texto_sin_demandante) for rx in regexes):
             return canon
 
-    # 4. Si no hay evidencia clara, mejor devolver INDETERMINADO
+    # 5. Si nada claro, devolver INDETERMINADO
     return "INDETERMINADO"
 
 def classify(text: str) -> dict:
