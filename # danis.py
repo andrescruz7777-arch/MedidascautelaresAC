@@ -124,11 +124,10 @@ def detect_entity(filename: str, text: str, detectors) -> str:
 def classify(text: str) -> dict:
     t = text.lower()
 
-    # Detectamos primero lo positivo
     positive = any(re.search(p, t) for p in POS_MARKERS)
+    negative = any(re.search(n, t) for n in NEG_MARKERS)
     inembargable = any(re.search(k, t) for k in INEMB_MARKERS)
     sin_saldo = any(re.search(k, t) for k in SIN_SALDO_MARKERS)
-    negative = any(re.search(n, t) for n in NEG_MARKERS)
 
     # 👇 Complemento: "no posee recursos" o "no tiene recursos" = sin saldo, no sin vínculo
     if re.search(r"no.*posee.*recursos", t) or re.search(r"no.*tiene.*recursos", t):
@@ -137,10 +136,17 @@ def classify(text: str) -> dict:
 
     prods = sorted({kw for kw in PRODUCTS if kw in t})
 
-    # 👇 Ajuste de prioridad: si hay positivo, ignora negativos
+    # 👇 Nueva prioridad: si hay positivo, anulamos el negativo
     if positive:
         negative = False
 
+    return {
+        "positive": positive,
+        "negative": negative and not positive,
+        "inembargable": inembargable,
+        "sin_saldo": sin_saldo,
+        "products": prods
+    }
     return {
         "positive": positive,
         "negative": negative and not positive,
