@@ -108,22 +108,17 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Excluir secciones típicas de demandante o radicado
+    # 1. Regla prioritaria: si aparece "caja social" o "banco caja social", devolver CAJA SOCIAL
+    if re.search(r"banco\s+caja\s+social", hay, re.IGNORECASE) or re.search(r"caja\s+social", hay, re.IGNORECASE):
+        return "BANCO CAJA SOCIAL"
+
+    # 2. Eliminar secciones típicas de demandante
     texto_sin_demandante = re.sub(
         r"demandante.*?(demandado|radicado|referencia|vs)", 
         " ", 
         hay, 
         flags=re.DOTALL | re.IGNORECASE
     )
-
-    # 2. Buscar explícitamente encabezados o firmas con "BANCO ..."
-    match_banco = re.search(r"(banco\s+[a-záéíóú]+(\s+[a-záéíóú]+)*)", texto_sin_demandante, re.IGNORECASE)
-    if match_banco:
-        posible = match_banco.group(1).upper()
-        # validar contra catálogo
-        for canon, regexes, domains in detectors:
-            if any(rx.search(posible.lower()) for rx in regexes):
-                return canon
 
     # 3. Revisar dominios primero
     for canon, regexes, domains in detectors:
