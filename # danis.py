@@ -108,7 +108,7 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Eliminar la sección donde aparece "DEMANDANTE ... DEMANDADO"
+    # 1. Eliminar sección completa de DEMANDANTE hasta DEMANDADO / RADICADO / REFERENCIA
     texto_sin_demandante = re.sub(
         r"demandante.*?(demandado|radicado|referencia)", 
         " ", 
@@ -116,7 +116,7 @@ def detect_entity(filename: str, text: str, detectors) -> str:
         flags=re.DOTALL | re.IGNORECASE
     )
 
-    # 2. Revisar dominios primero (correos, sitios web)
+    # 2. Revisar dominios primero
     for canon, regexes, domains in detectors:
         if any(dom.lower() in texto_sin_demandante for dom in domains):
             return canon
