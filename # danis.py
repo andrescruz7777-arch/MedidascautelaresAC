@@ -108,27 +108,36 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Eliminar sección completa de DEMANDANTE hasta DEMANDADO / RADICADO / REFERENCIA
+    # 1. Excluir secciones típicas de demandante o radicado
     texto_sin_demandante = re.sub(
-        r"demandante.*?(demandado|radicado|referencia)", 
+        r"demandante.*?(demandado|radicado|referencia|vs)", 
         " ", 
         hay, 
         flags=re.DOTALL | re.IGNORECASE
     )
 
-    # 2. Revisar dominios primero
+    # 2. Buscar explícitamente encabezados o firmas con "BANCO ..."
+    match_banco = re.search(r"(banco\s+[a-záéíóú]+(\s+[a-záéíóú]+)*)", texto_sin_demandante, re.IGNORECASE)
+    if match_banco:
+        posible = match_banco.group(1).upper()
+        # validar contra catálogo
+        for canon, regexes, domains in detectors:
+            if any(rx.search(posible.lower()) for rx in regexes):
+                return canon
+
+    # 3. Revisar dominios primero
     for canon, regexes, domains in detectors:
         if any(dom.lower() in texto_sin_demandante for dom in domains):
             return canon
 
-    # 3. Revisar patrones de nombres en el texto sin demandante
+    # 4. Revisar patrones de nombres en el texto sin demandante
     for canon, regexes, domains in detectors:
         if any(rx.search(texto_sin_demandante) for rx in regexes):
             return canon
 
-    # 4. Si no encuentra nada, usar nombre de archivo como fallback
+    # 5. Fallback: nombre de archivo
     return filename.rsplit(".", 1)[0].upper()
-    
+
 def classify(text: str) -> dict:
     t = text.lower()
 
