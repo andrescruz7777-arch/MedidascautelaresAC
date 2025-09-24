@@ -110,16 +110,27 @@ def detect_entity(filename:str,text:str,detectors)->str:
         if any(rx.search(hay) for rx in regexes): return canon
     return filename.rsplit(".",1)[0].upper()
 
-def classify(text:str)->dict:
-    t=text.lower()
-    positive=any(re.search(p,t) for p in POS_MARKERS)
-    negative=any(re.search(n,t) for n in NEG_MARKERS)
-    inembargable=any(re.search(k,t) for k in INEMB_MARKERS)
-    sin_saldo=any(re.search(k,t) for k in SIN_SALDO_MARKERS)
-    prods=sorted({kw for kw in PRODUCTS if kw in t})
-    return {"positive":positive and not negative,"negative":negative and not positive,
-            "inembargable":inembargable,"sin_saldo":sin_saldo,"products":prods}
+def classify(text: str) -> dict:
+    t = text.lower()
+    positive = any(re.search(p, t) for p in POS_MARKERS)
+    negative = any(re.search(n, t) for n in NEG_MARKERS)
+    inembargable = any(re.search(k, t) for k in INEMB_MARKERS)
+    sin_saldo = any(re.search(k, t) for k in SIN_SALDO_MARKERS)
 
+    # 👇 Complemento: "no posee recursos" o "no tiene recursos" = sin saldo, no sin vínculo
+    if re.search(r"no.*posee.*recursos", t) or re.search(r"no.*tiene.*recursos", t):
+        sin_saldo = True
+        negative = False   # no lo marcamos como sin vínculo
+
+    prods = sorted({kw for kw in PRODUCTS if kw in t})
+
+    return {
+        "positive": positive and not negative,
+        "negative": negative and not positive,
+        "inembargable": inembargable,
+        "sin_saldo": sin_saldo,
+        "products": prods
+    }
 def render_line(entity:str,cls:dict)->str:
     if cls["positive"]:
         details=[]
