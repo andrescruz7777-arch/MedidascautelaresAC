@@ -38,7 +38,10 @@ POS_MARKERS = [
     r"hemos.*atendido.*medida", r"se.*procedi[oó].*atender.*medida",
     r"se.*atend[ií]o.*medida", r"registra.*medida", r"aplicaci[oó]n.*medida",
     r"se.*aplic[oó].*medida", r"embargo.*aplicado", r"decret[oó].*embargo",
-    r"fue.*debitad", r"procedimos.*atender.*medida", r"medida.*registrada"
+    r"fue.*debitad", r"procedimos.*atender.*medida", r"medida.*registrada",
+    # 👇 nuevos patrones
+    r"acatado.*su.*solicitud.*procediendo.*embargo",
+    r"procediendo.*con.*el.*embargo",
 ]
 INEMB_MARKERS = [r"inembargable", r"inembargables", r"art[ií]culo 594", r"ley 100 de 1993"]
 SIN_SALDO_MARKERS = [
