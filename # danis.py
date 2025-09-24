@@ -108,30 +108,26 @@ def build_detectors(extra_raw: str):
 def detect_entity(filename: str, text: str, detectors) -> str:
     hay = f"{filename}\n{text}".lower()
 
-    # 1. Regla prioritaria: si aparece "caja social" o "banco caja social", devolver CAJA SOCIAL
-    if re.search(r"banco\s+caja\s+social", hay, re.IGNORECASE) or re.search(r"caja\s+social", hay, re.IGNORECASE):
-        return "BANCO CAJA SOCIAL"
-
-    # 2. Eliminar secciones típicas de demandante
+    # 1. Excluir secciones típicas de DEMANDANTE
     texto_sin_demandante = re.sub(
-        r"demandante.*?(demandado|radicado|referencia|vs)", 
-        " ", 
-        hay, 
+        r"demandante.*?(demandado|radicado|referencia|vs)",
+        " ",
+        hay,
         flags=re.DOTALL | re.IGNORECASE
     )
 
-    # 3. Revisar dominios primero
+    # 2. Revisar dominios primero
     for canon, regexes, domains in detectors:
         if any(dom.lower() in texto_sin_demandante for dom in domains):
             return canon
 
-    # 4. Revisar patrones de nombres en el texto sin demandante
+    # 3. Revisar patrones de nombres
     for canon, regexes, domains in detectors:
         if any(rx.search(texto_sin_demandante) for rx in regexes):
             return canon
 
-    # 5. Fallback: nombre de archivo
-    return filename.rsplit(".", 1)[0].upper()
+    # 4. Si no hay evidencia clara, mejor devolver INDETERMINADO
+    return "INDETERMINADO"
 
 def classify(text: str) -> dict:
     t = text.lower()
