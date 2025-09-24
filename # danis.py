@@ -102,30 +102,47 @@ def build_detectors(extra_raw: str):
                 detectors.append((name.strip(),regexes,[]))
     return detectors
 
-def detect_entity(filename:str,text:str,detectors)->str:
-    hay=f"{filename}\n{text}".lower()
-    for canon,regexes,domains in detectors:
-        if any(dom.lower() in hay for dom in domains): return canon
-    for canon,regexes,domains in detectors:
-        if any(rx.search(hay) for rx in regexes): return canon
-    return filename.rsplit(".",1)[0].upper()
+def detect_entity(filename: str, text: str, detectors) -> str:
+    hay = f"{filename}\n{text}".lower()
+
+    # 1. Excluir coincidencias en la sección de DEMANDANTE
+    texto_sin_demandante = re.sub(r"demandante.*?(demandado|radicado|referencia)", " ", hay, flags=re.DOTALL)
+
+    # 2. Revisar dominios primero
+    for canon, regexes, domains in detectors:
+        if any(dom.lower() in texto_sin_demandante for dom in domains):
+            return canon
+
+    # 3. Revisar nombres en el texto sin DEMANDANTE
+    for canon, regexes, domains in detectors:
+        if any(rx.search(texto_sin_demandante) for rx in regexes):
+            return canon
+
+    # 4. Fallback al nombre de archivo
+    return filename.rsplit(".", 1)[0].upper()
 
 def classify(text: str) -> dict:
     t = text.lower()
+
+    # Detectamos primero lo positivo
     positive = any(re.search(p, t) for p in POS_MARKERS)
-    negative = any(re.search(n, t) for n in NEG_MARKERS)
     inembargable = any(re.search(k, t) for k in INEMB_MARKERS)
     sin_saldo = any(re.search(k, t) for k in SIN_SALDO_MARKERS)
+    negative = any(re.search(n, t) for n in NEG_MARKERS)
 
     # 👇 Complemento: "no posee recursos" o "no tiene recursos" = sin saldo, no sin vínculo
     if re.search(r"no.*posee.*recursos", t) or re.search(r"no.*tiene.*recursos", t):
         sin_saldo = True
-        negative = False   # no lo marcamos como sin vínculo
+        negative = False
 
     prods = sorted({kw for kw in PRODUCTS if kw in t})
 
+    # 👇 Ajuste de prioridad: si hay positivo, ignora negativos
+    if positive:
+        negative = False
+
     return {
-        "positive": positive and not negative,
+        "positive": positive,
         "negative": negative and not positive,
         "inembargable": inembargable,
         "sin_saldo": sin_saldo,
